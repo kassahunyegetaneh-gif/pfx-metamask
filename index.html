@@ -52,9 +52,7 @@
     >
 
     <h1>Phila Forex Trading</h1>
-
     <h2>PFX</h2>
-
     <p>Ethereum Sepolia Testnet</p>
 
     <button id="add">🦊 Add PFX to MetaMask</button>
@@ -64,6 +62,7 @@
   </div>
 
   <script>
+
     const tokenAddress =
       "0xB8F48a2B584C0fb27c920C46e0d1E168D70eeeDE";
 
@@ -75,14 +74,45 @@
 
     const sepoliaChainId = "0xaa36a7";
 
+    function getMetaMaskProvider() {
+
+      if (!window.ethereum) {
+        return null;
+      }
+
+      // If multiple wallets are installed,
+      // choose MetaMask's provider.
+      if (window.ethereum.providers) {
+
+        const metamask = window.ethereum.providers.find(
+          provider => provider.isMetaMask
+        );
+
+        if (metamask) {
+          return metamask;
+        }
+      }
+
+      // Single injected provider
+      if (window.ethereum.isMetaMask) {
+        return window.ethereum;
+      }
+
+      return null;
+    }
+
     function setStatus(message) {
       document.getElementById("status").textContent = message;
     }
 
     async function addToken() {
 
-      if (!window.ethereum) {
-        setStatus("Please install MetaMask.");
+      const provider = getMetaMaskProvider();
+
+      if (!provider) {
+        setStatus(
+          "MetaMask was not detected. Please open this page in Chrome with MetaMask installed."
+        );
         return;
       }
 
@@ -90,11 +120,11 @@
 
         setStatus("Connecting to MetaMask...");
 
-        await window.ethereum.request({
+        await provider.request({
           method: "eth_requestAccounts"
         });
 
-        let chainId = await window.ethereum.request({
+        let chainId = await provider.request({
           method: "eth_chainId"
         });
 
@@ -102,7 +132,7 @@
 
           setStatus("Switching MetaMask to Sepolia...");
 
-          await window.ethereum.request({
+          await provider.request({
             method: "wallet_switchEthereumChain",
             params: [
               { chainId: sepoliaChainId }
@@ -112,7 +142,7 @@
 
         setStatus("Opening MetaMask...");
 
-        const wasAdded = await window.ethereum.request({
+        const wasAdded = await provider.request({
           method: "wallet_watchAsset",
           params: {
             type: "ERC20",
