@@ -73,25 +73,44 @@
     const tokenImage =
       "https://raw.githubusercontent.com/kassahunyegetaneh-gif/assets/master/blockchains/ethereum/assets/0xB8F48a2B584C0fb27c920C46e0d1E168D70eeeDE/logo.png";
 
+    const sepoliaChainId = "0xaa36a7";
+
+    function setStatus(message) {
+      document.getElementById("status").textContent = message;
+    }
+
     async function addToken() {
 
       if (!window.ethereum) {
-        document.getElementById("status").textContent =
-          "Please install MetaMask.";
+        setStatus("Please install MetaMask.");
         return;
       }
 
       try {
 
-        const chainId = await window.ethereum.request({
+        setStatus("Connecting to MetaMask...");
+
+        await window.ethereum.request({
+          method: "eth_requestAccounts"
+        });
+
+        let chainId = await window.ethereum.request({
           method: "eth_chainId"
         });
 
-        if (chainId !== "0xaa36a7") {
-          document.getElementById("status").textContent =
-            "Please switch MetaMask to Ethereum Sepolia first.";
-          return;
+        if (chainId.toLowerCase() !== sepoliaChainId) {
+
+          setStatus("Switching MetaMask to Sepolia...");
+
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [
+              { chainId: sepoliaChainId }
+            ]
+          });
         }
+
+        setStatus("Opening MetaMask...");
 
         const wasAdded = await window.ethereum.request({
           method: "wallet_watchAsset",
@@ -106,20 +125,25 @@
           }
         });
 
-        document.getElementById("status").textContent =
-          wasAdded
-            ? "PFX was added to MetaMask!"
-            : "PFX was not added.";
+        if (wasAdded) {
+          setStatus("✅ PFX was added to MetaMask!");
+        } else {
+          setStatus("PFX was not added.");
+        }
 
       } catch (error) {
 
-        document.getElementById("status").textContent =
-          error.message || "Something went wrong.";
+        setStatus(
+          error.message || "Something went wrong."
+        );
 
       }
     }
 
-    document.getElementById("add").addEventListener("click", addToken);
+    document
+      .getElementById("add")
+      .addEventListener("click", addToken);
+
   </script>
 
 </body>
